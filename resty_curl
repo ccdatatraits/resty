@@ -1,5 +1,5 @@
 #
-# resty - A tiny command line REST interface for bash and zsh.
+# resty_curl - A tiny command line REST interface for bash and zsh.
 #
 # Fork me on github:
 #   http://github.com/micha/resty
@@ -9,20 +9,20 @@
 #   Copyright 2009, no rights reserved.
 #
 
-export _resty_host=""
-export _resty_path=""
-export _resty_nohistory=""
+export _resty_curl_host=""
+export _resty_curl_path=""
+export _resty_curl_nohistory=""
 
-function resty() {
+function resty_curl() {
   local confdir datadir host cookies method h2t editor domain _path opt dat res ret out err verbose raw i j d tmpf args2 wantdata vimedit quote query maybe_query dry
   local -a curlopt
   local -a curlopt2
 
   if [ -n "$XDG_CONFIG_HOME" ]; then
-    confdir="$XDG_CONFIG_HOME/resty"
-    datadir="$XDG_DATA_HOME/resty"
+    confdir="$XDG_CONFIG_HOME/resty_curl"
+    datadir="$XDG_DATA_HOME/resty_curl"
   else
-    confdir="$HOME/.resty"
+    confdir="$HOME/.resty_curl"
     datadir="$confdir"
   fi
   mkdir -p "$confdir"
@@ -57,22 +57,22 @@ function resty() {
   [ -z "$quote" ] && _path=$(echo "$_path"|sed 's/%/%25/g;s/\[/%5B/g;s/\]/%5D/g;s/|/%7C/g;s/\$/%24/g;s/&/%26/g;s/+/%2B/g;s/,/%2C/g;s/:/%3A/g;s/;/%3B/g;s/=/%3D/g;s/?/%3F/g;s/@/%40/g;s/ /%20/g;s/#/%23/g;s/{/%7B/g;s/}/%7D/g;s/\\/%5C/g;s/\^/%5E/g;s/~/%7E/g;s/`/%60/g')
 
   [ "$method" = "HEAD" ] || [ "$method" = "OPTIONS" ] && raw="yes"
-  [ -z "$_resty_host" ] && _resty_host=$(cat "$host" 2>/dev/null)
-  [ "$method" = "-v" ] && echo "$_resty_host $_resty_opts" && return
-  [ -z "$method" ] && echo "$_resty_host" && return
-  [ -n "$_path" ] && _resty_path=$_path
-  domain=$(echo -n "$_resty_host" \
+  [ -z "$_resty_curl_host" ] && _resty_curl_host=$(cat "$host" 2>/dev/null)
+  [ "$method" = "-v" ] && echo "$_resty_curl_host $_resty_curl_opts" && return
+  [ -z "$method" ] && echo "$_resty_curl_host" && return
+  [ -n "$_path" ] && _resty_curl_path=$_path
+  domain=$(echo -n "$_resty_curl_host" \
     |perl -ane '/^https?:\/\/([^\/\*]+)/; print $1')
-  _path="${_resty_host//\*/$_resty_path}"
+  _path="${_resty_curl_host//\*/$_resty_curl_path}"
 
   case "$method" in
     HEAD|OPTIONS|GET|DELETE|POST|PUT|PATCH|TRACE)
-      eval "curlopt2=(${_resty_opts[*]})"
+      eval "curlopt2=(${_resty_curl_opts[*]})"
       dat=$( ( [ "$wantdata" = "yes" ] \
         && ( ( [ -n "$dat" ] && echo "$dat") \
         || ([ ! -t 0 ] && echo "@-") ) ) || echo)
       if [ "$wantdata" = "yes" ] && [ "$vimedit" = "yes" ]; then
-        tmpf=$(mktemp /tmp/resty.XXXXXX)
+        tmpf=$(mktemp /tmp/resty_curl.XXXXXX)
         [ -t 0 ] || cat > $tmpf
         (exec < /dev/tty; "$editor" $tmpf)
         dat=$(cat $tmpf)
@@ -100,7 +100,7 @@ function resty() {
       echo "$err" | grep -i '^< \s*Content-Type:  *text/html' >/dev/null \
         && [ -z "$raw" ] && d=$h2t || d=cat
       [ -n "$out" ] && out=$(echo "$out" |eval "$d")
-      [ "$d" != "${d##lynx}" ] && out=$(echo "$out" |perl -e "\$host='$(echo "$_resty_host" |sed 's/^\(https*:\/\/[^\/*]*\).*$/\1/')';" -e '@a=<>; $s=0; foreach (reverse(@a)) { if ($_ =~ /^References$/) { $s++; } unless ($s>0) { s/^\s+[0-9]+\. //; s/^file:\/\/localhost/$host/; } push(@ret,$_); } print(join("",reverse(@ret)))')
+      [ "$d" != "${d##lynx}" ] && out=$(echo "$out" |perl -e "\$host='$(echo "$_resty_curl_host" |sed 's/^\(https*:\/\/[^\/*]*\).*$/\1/')';" -e '@a=<>; $s=0; foreach (reverse(@a)) { if ($_ =~ /^References$/) { $s++; } unless ($s>0) { s/^\s+[0-9]+\. //; s/^file:\/\/localhost/$host/; } push(@ret,$_); } print(join("",reverse(@ret)))')
       if [ "$ret" != "2" ]; then
         [ -n "$out" ] && echo "$out" 1>&2
         return $ret
@@ -110,50 +110,50 @@ function resty() {
       fi
       ;;
     http://*|https://*)
-      _resty_opts=$(printf '%q ' "${curlopt[@]}")
-      export _resty_opts
+      _resty_curl_opts=$(printf '%q ' "${curlopt[@]}")
+      export _resty_curl_opts
       echo "$method" |grep '\*' >/dev/null || method="${method}*"
-      (echo "$method" |tee "${_resty_nohistory:-$host}") |cat 1>&2 \
-        && _resty_host="$method"
+      (echo "$method" |tee "${_resty_curl_nohistory:-$host}") |cat 1>&2 \
+        && _resty_curl_host="$method"
       ;;
     *)
-      resty "http://$method" "${curlopt[@]}"
+      resty_curl "http://$method" "${curlopt[@]}"
       ;;
   esac
 }
 
 function HEAD() {
-  resty HEAD "$@"
+  resty_curl HEAD "$@"
 }
 
 function OPTIONS() {
-  resty OPTIONS "$@"
+  resty_curl OPTIONS "$@"
 }
 
 function GET() {
-  resty GET "$@"
+  resty_curl GET "$@"
 }
 
 function POST() {
-  resty POST "$@"
+  resty_curl POST "$@"
 }
 
 function PUT() {
-  resty PUT "$@"
+  resty_curl PUT "$@"
 }
 
 function PATCH() {
-  resty PATCH "$@"
+  resty_curl PATCH "$@"
 }
 
 function DELETE() {
-  resty DELETE "$@"
+  resty_curl DELETE "$@"
 }
 
 function TRACE() {
-  resty TRACE "$@"
+  resty_curl TRACE "$@"
 }
 
-[ "$1" = "-W" ] && export _resty_nohistory="/dev/null" && [[ $# > 0 ]] && shift
+[ "$1" = "-W" ] && export _resty_curl_nohistory="/dev/null" && [[ $# > 0 ]] && shift
 
-resty "$@" >/dev/null 2>&1
+resty_curl "$@" >/dev/null 2>&1
